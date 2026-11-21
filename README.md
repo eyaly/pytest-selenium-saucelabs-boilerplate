@@ -134,6 +134,14 @@ Sauce Labs job link:
 Add an entry to `config/capabilities.py` and map the same key to its Selenium options class
 in `OPTIONS_CLASSES` in `conftest.py`. Every test automatically runs on it.
 
+Every capability in the entry is sent as-is, so the same tests can also run in mobile
+browsers on emulators, simulators and real devices: add the `appium:*` capabilities, and
+put Sauce-specific ones under `sauce:options` (they are merged with the username, build
+and tags).
+
+Use the [Platform Configurator](https://saucelabs.com/products/platform-configurator) to get
+the capabilities for each browser or device.
+
 ## License
 
 [MIT](LICENSE)

@@ -106,16 +106,20 @@ def _add_job_url_to_failure(report, job_url):
 def driver(request, browser_name):
     username = os.environ.get("SAUCE_USERNAME")
     access_key = os.environ.get("SAUCE_ACCESS_KEY")
-    if not username or not access_key:
-        pytest.exit("Please set SAUCE_USERNAME and SAUCE_ACCESS_KEY environment variables", returncode=1)
+    # if not username or not access_key:
+        # pytest.exit("Please set SAUCE_USERNAME and SAUCE_ACCESS_KEY environment variables", returncode=1)
 
     caps = CAPABILITIES[browser_name]
     options = OPTIONS_CLASSES[browser_name]()
-    options.browser_version = caps["browserVersion"]
-    options.platform_name = caps["platformName"]
+    # Send every capability as-is (browserName, browserVersion, platformName, appium:*, ...),
+    # so desktop browsers, emulators, simulators and real devices all work.
+    for name, value in caps.items():
+        if name != "sauce:options":
+            options.set_capability(name, value)
     options.set_capability(
         "sauce:options",
         {
+            **caps.get("sauce:options", {}),  # per-browser Sauce options, e.g. appiumVersion
             "username": username,
             "accessKey": access_key,
             "name": request.node.originalname,  # test function name, without the [browser] suffix
@@ -140,6 +144,16 @@ def driver(request, browser_name):
     rep_call = getattr(request.node, "rep_call", None)
     passed = bool(rep_call and rep_call.passed)
     try:
+        if not passed:
+            browser.execute_script(f"sauce:context=Failure reason: {_failure_reason(rep_call)}")
+
         browser.execute_script(f"sauce:job-result={'passed' if passed else 'failed'}")
     finally:
         browser.quit()
+
+
+def _failure_reason(rep_call):
+    if rep_call is None:
+        return "test did not run"
+    # Line 0 is the "Sauce Labs job: <link>" line added by _add_job_url_to_failure; line 1 is the error
+    return rep_call.longrepr.reprcrash.message.splitlines()[1]

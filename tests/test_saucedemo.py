@@ -5,7 +5,8 @@ BASE_URL = "https://www.saucedemo.com"
 
 def login(driver, username, password="secret_sauce"):
     driver.get(BASE_URL)
-    driver.find_element(By.ID, "user-name").send_keys(username)
+    # driver.find_element(By.ID, "user-name").send_keys(username)
+    driver.find_element(By.XPATH, "//input[@data-test='username']").send_keys(username)
     driver.find_element(By.ID, "password").send_keys(password)
     driver.find_element(By.ID, "login-button").click()
 
