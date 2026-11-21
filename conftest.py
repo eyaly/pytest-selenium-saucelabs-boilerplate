@@ -111,11 +111,15 @@ def driver(request, browser_name):
 
     caps = CAPABILITIES[browser_name]
     options = OPTIONS_CLASSES[browser_name]()
-    options.browser_version = caps["browserVersion"]
-    options.platform_name = caps["platformName"]
+    # Send every capability as-is (browserName, browserVersion, platformName, appium:*, ...),
+    # so desktop browsers, emulators, simulators and real devices all work.
+    for name, value in caps.items():
+        if name != "sauce:options":
+            options.set_capability(name, value)
     options.set_capability(
         "sauce:options",
         {
+            **caps.get("sauce:options", {}),  # per-browser Sauce options, e.g. appiumVersion
             "username": username,
             "accessKey": access_key,
             "name": request.node.originalname,  # test function name, without the [browser] suffix
